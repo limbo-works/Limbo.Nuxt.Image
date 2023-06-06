@@ -1,7 +1,7 @@
 {
   "name": "@limbo-works/image",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./nuxt.config.js",
   "scripts": {
     "dev": "nuxi prepare & nuxi dev .playground",
@@ -11,9 +11,11 @@
     "lint": "eslint .",
     "test": "exit 0"
   },
+  "dependencies": {
+    "@nuxt/image-edge": "^1.0.0-27968280.9739e4d"
+  },
   "devDependencies": {
     "@nuxtjs/eslint-config-typescript": "^12.0.0",
-    "@nuxt/image-edge": "^1.0.0-27968280.9739e4d",
     "eslint": "^8.28.0",
     "nuxt": "^3.0.0",
     "typescript": "^4.9.3"
