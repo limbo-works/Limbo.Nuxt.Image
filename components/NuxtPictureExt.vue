@@ -8,7 +8,7 @@
 		:fit="fit"
 		:src="src"
 		:alt="alt"
-		:sizes="sizes"
+		:sizes="sizes ? useImageSizes(sizes) : null"
 		:width="width"
 		:height="height"
 		:modifiers="{

@@ -7,7 +7,9 @@ export default defineNuxtConfig({
   modules: ["@nuxt/image-edge"],
 
   image: {
-    screens: {},
+    screens: {
+      // Remove the defaults
+    },
     provider: "umbracoImageProcessor",
     providers: {
       umbracoImageProcessor: {
