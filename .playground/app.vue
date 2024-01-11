@@ -1,3 +1,5 @@
+
+import NuxtPictureExt from '../components/NuxtPictureExt.vue';
 <template>
   <div>
     <BaseImg
@@ -5,11 +7,33 @@
 			width="400"
 			height="200"
       sizes="<1080:100vw 1080px"
-			ratio="0.5"
-			class="w-auto h-[400px]"
-			src="/media/dj2bhlba/_hyt6524.jpg?rxy=0.5,0.5&width=2044&height=3072&rnd=133222323420230000"
-			@click="() => {}"
-			@click.native="() => {}"
+			ratio="3"
+			src="photo-1480714378408-67cf0d13bc1b.avif"
+			@click="console.log('click')"
+			@click.native="console.log('click.native')"
+		/>
+
+    <NuxtPictureExt
+			fit="cover"
+			width="400"
+			height="200"
+			src="photo-1507615000156-f066acbb8edc.avif"
+		/>
+
+    <NuxtPictureExt
+			fit="cover"
+			width="400"
+			height="200"
+			src="photo-1480714378408-67cf0d13bc1b.avif"
+		/>
+
+    <NuxtPicture
+			fit="cover"
+			width="400"
+			height="200"
+			src="photo-1480714378408-67cf0d13bc1b.avif"
+      loading="eager"
+      decoding="auto"
 		/>
   </div>
 </template>

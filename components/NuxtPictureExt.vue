@@ -1,7 +1,7 @@
 <template>
 	<NuxtPicture
-		v-if="src"
-    ref="NuxtPicture"
+    v-if="src"
+    ref="nuxtPicture"
 		class="c-nuxt-picture-ext"
 		:class="`c-nuxt-picture-ext--${isLoaded ? 'is-loaded' : 'is-loading'}`"
 		:style="computedStyle"
@@ -20,119 +20,124 @@
 		:img-attrs="computedImgAttrs"
 		:quality="quality"
 		:loading="loading"
+    :decoding="decoding"
 		@load="onLoad"
 	/>
 </template>
 
-<script>
+<script setup>
 // https://image.nuxtjs.org/components/nuxt-picture and https://image.nuxtjs.org/components/nuxt-img
 
-export default defineComponent({
-	name: 'NuxtPictureExt',
-
-	props: {
-		alt: {
-			type: String,
-			default: '',
-		},
-		src: {
-			type: String,
-		},
-		sizes: {
-			type: String,
-			default: null,
-		},
-		width: { type: [Number, String], required: false },
-		height: { type: [Number, String], required: false },
-		ratio: { type: [Number, String], required: false },
-		fit: { type: String, default: '' },
-		loading: {
-			type: String,
-			default: 'lazy',
-			validator: (value) => ['lazy', 'eager', 'auto'].includes(value),
-		},
-
-		imgAttrs: { type: Object, default: () => ({}) },
-		quality: { type: [Number, String], default: 100 },
-		modifiers: { type: Object, default: () => ({}) },
-	},
-
-	data() {
-		return {
-			isLoaded: false,
-		};
-	},
-
-	computed: {
-    urlParams() {
-      const obj = {};
-
-      if (this.src) {
-        const url = new URL(this.src, 'https://example.com');
-        const params = new URLSearchParams(url.search);
-        params.forEach((value, key) => {
-          obj[key] = value;
-        });
-      }
-
-      return obj;
-    },
-
-		computedStyle() {
-			let style = null;
-
-      // Aspect ratio
-      if (this.ratio) {
-        style = { aspectRatio: this.ratio };
-      } else if (this.width && this.height) {
-        style = { aspectRatio: `${this.width} / ${this.height}` };
-      } else if (this.urlParams.width && this.urlParams.height) {
-        style = { aspectRatio: `${this.urlParams.width} / ${this.urlParams.height}` };
-      }
-
-      // Focus point
-      if (this.fit && ['cover', 'none'].includes(this.fit) && this.urlParams.rxy?.split?.(',').length === 2) {
-        const [x, y] = this.urlParams.rxy.split(',');
-        style = {
-          ...style,
-          '--object-position': `${Math.round(x * 10000) / 100}% ${Math.round(y * 10000) / 100}%`,
-        };
-      }
-
-			return style;
-		},
-
-		computedImgAttrs() {
-			const className = ['c-nuxt-picture-ext__img', this.imgAttrs.class];
-			const style = [this.imgAttrs.style];
-
-			if (this.fit && this.fit !== 'crop') {
-				style.unshift({ objectFit: this.fit });
-			}
-
-			return {
-				...this.imgAttrs,
-				class: className.filter(Boolean),
-				style: style.filter(Boolean),
-			};
-		},
-	},
-
-  mounted() {
-    const image = this.$el?.querySelector?.('img');
-    if (image) {
-      this.isLoaded = image.complete && image.naturalHeight !== 0;
-    }
+const emit = defineEmits(['load']);
+const props = defineProps({
+  alt: {
+    type: String,
+    default: '',
+  },
+  src: {
+    type: String,
+  },
+  sizes: {
+    type: String,
+    default: null,
+  },
+  width: { type: [Number, String] },
+  height: { type: [Number, String] },
+  ratio: { type: [Number, String] },
+  fit: { type: String, default: '' },
+  loading: {
+    type: String,
+    default: 'lazy',
+    validator: (value) => ['lazy', 'eager', 'auto'].includes(value),
+  },
+  decoding: {
+    type: String,
+    default: 'sync',
+    validator: (value) => ['async', 'sync', 'auto'].includes(value),
   },
 
-	methods: {
-		onLoad(e) {
-			this.$emit('load', e);
-			this.isLoaded = true;
-		},
-	},
+  imgAttrs: { type: Object, default: () => ({}) },
+  quality: { type: [Number, String], default: 100 },
+  modifiers: { type: Object, default: () => ({}) },
 });
+
+const nuxtPicture = ref(null);
+const isLoaded = ref(false);
+
+const urlParams = computed(() => {
+  const obj = {};
+
+  if (props.src) {
+    const url = new URL(props.src, 'https://example.com');
+    const params = new URLSearchParams(url.search);
+    params.forEach((value, key) => {
+      obj[key] = value;
+    });
+  }
+
+  return obj;
+});
+
+const computedStyle = computed(() => {
+  let style = null;
+
+  // Aspect ratio
+  if (props.ratio) {
+    style = { aspectRatio: props.ratio };
+  } else if (props.width && props.height) {
+    style = { aspectRatio: `${props.width} / ${props.height}` };
+  } else if (urlParams.value.width && urlParams.value.height) {
+    style = { aspectRatio: `${urlParams.value.width} / ${urlParams.value.height}` };
+  }
+
+  // Focus point
+  if (props.fit && ['cover', 'none'].includes(props.fit) && urlParams.value.rxy?.split?.(',').length === 2) {
+    const [x, y] = urlParams.value.rxy.split(',');
+    style = {
+        ...style,
+        '--object-position': `${Math.round(x * 10000) / 100}% ${Math.round(y * 10000) / 100}%`,
+      };
+  }
+
+  return style;
+});
+
+const computedImgAttrs = computed(() => {
+  const className = ['c-nuxt-picture-ext__img', props.imgAttrs.class];
+  const style = [props.imgAttrs.style];
+
+  if (props.fit && props.fit !== 'crop') {
+    style.unshift({ objectFit: props.fit });
+  }
+
+  return {
+    ...JSON.parse(JSON.stringify(props.imgAttrs)),
+    class: className.filter(Boolean),
+    style: style.filter(Boolean),
+  };
+  return {};
+});
+
+onMounted(() => {
+  const image = nuxtPicture?.value?.$el?.querySelector?.('img');
+  image?.complete && onLoad();
+});
+
+defineExpose({
+  nuxtPicture,
+  isLoaded,
+});
+
+/* Methods */
+function onLoad(e) {
+  e = e || new Event('load');
+  if (!isLoaded.value) {
+    emit('load', e);
+    isLoaded.value = true;
+  }
+}
 </script>
+
 
 <style>
 :where(.c-nuxt-picture-ext) {
@@ -141,8 +146,11 @@ export default defineComponent({
   height: auto;
 }
 :where(.c-nuxt-picture-ext__img) {
-	width: 100%;
-	height: 100%;
+  display: block;
+	min-width: 100%;
+	min-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-position: var(--object-position);
 }
 </style>
