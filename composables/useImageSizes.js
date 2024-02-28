@@ -3,60 +3,54 @@
  * @param {string} sizes The sizes to fill in between.
  */
 export function useImageSizes(sizes) {
+  let response = sizes;
   const screens = { ...useImage().options.screens };
   let breakpointList = [...new Set(Object.values(screens))]
     .map((value) => +value)
-    .filter((value) => !isNaN(value));
-  breakpointList.sort((a, b) => a - b);
+    .filter((value) => !isNaN(value))
+    .sort((a, b) => a - b);
 
-  let _return = sizes;
   if (sizes) {
-    const splitSizes = sizes
-      .split(" ")
-      .map((val) => {
-        if (!String(val).includes(":")) {
-          return `${getScreenKey(Math.max(...breakpointList))}:${val.trim()}`;
-        }
-        return String(val).trim();
-      })
-      .filter((val) => {
-        return Boolean(val) && val.split(":").filter(Boolean).length === 2;
-      });
+    const splitSizes = sizes.split(" ").map((val) => String(val).trim());
+
     splitSizes.sort((a, b) => {
       a = parseInt(a.split(":")[0].replace(/\D/g, ""), 10);
       b = parseInt(b.split(":")[0].replace(/\D/g, ""), 10);
-
-      return a - b;
+      return b - a;
     });
 
     if (sizes.includes("vw") && breakpointList.length) {
       const output = [];
 
       for (let i = 0; i < splitSizes.length; i++) {
-        const size = splitSizes[i].split(":")[1];
-        const breakpoint = parseInt(
-          splitSizes[i].split(":")[0].replace(/\D/g, ""),
-          10
-        );
+        const [size, raw] = splitSizes[i].split(":").reverse();
+        const breakpoint = raw && parseInt(raw.replace(/\D/g, ""), 10);
+        const isValue = size.includes("px") || size.includes("vw");
 
-        if (splitSizes[i].includes("vw")) {
+        if (isValue && breakpoint) {
           const midList = breakpointList
-            .filter((val) => val < breakpoint)
-            .map((val) => {
-              return `${getScreenKey(val)}:${size}`;
-            });
+            .filter((v) => v >= breakpoint)
+            .map((v) => `${getScreenKey(v)}:${size}`);
+
           midList.length && output.push(...midList);
         }
 
-        breakpointList = breakpointList.filter((val) => val > breakpoint);
-        output.push(splitSizes[i]);
+        if (isValue && !breakpoint) {
+          output.push(
+            ...breakpointList.map((v) => `${getScreenKey(v)}:${size}`)
+          );
+        }
+
+        breakpointList = breakpointList.filter((val) => val < breakpoint);
       }
-      _return = output.join(" ");
+
+      response = output.join(" ");
     } else {
-      _return = splitSizes.join(" ");
+      response = splitSizes.join(" ");
     }
   }
-  return _return;
+
+  return response;
 
   function getScreenKey(size) {
     return Object.keys(screens).find((key) => screens[key] === size);
