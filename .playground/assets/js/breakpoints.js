@@ -9,7 +9,7 @@ const rootFontSize = 16;
 	something, you are of course free to un-
 	comment it.
 */
-module.exports = [568, 605, 760, 990, 1080].reduce(
+module.exports = [300, 568, 605, 760, 990, 1080, 1440].reduce(
   (acc, value) => ({
     ...acc,
 
