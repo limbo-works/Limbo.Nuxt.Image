@@ -1,27 +1,28 @@
 <template>
 	<NuxtPicture
-    v-if="src"
-    ref="nuxtPicture"
-		class="c-nuxt-picture-ext"
-		:class="`c-nuxt-picture-ext--${isLoaded ? 'is-loaded' : 'is-loading'}`"
-		:style="computedStyle"
-		:fit="fit"
-		:src="src"
-		:alt="alt"
-		:sizes="sizes ? useImageSizes(sizes) : null"
-		:width="width"
-		:height="height"
-		:modifiers="{
-			ratio: ratio,
-			sourceWidth: width,
-			sourceHeight: height,
-			...modifiers,
-		}"
-		:img-attrs="computedImgAttrs"
-		:quality="quality"
-		:loading="loading"
-    :decoding="decoding"
-		@load="onLoad"
+        v-if="src"
+        ref="nuxtPicture"
+        class="c-nuxt-picture-ext"
+        :class="`c-nuxt-picture-ext--${isLoaded ? 'is-loaded' : 'is-loading'}`"
+        :style="computedStyle"
+        :fit="fit"
+        :src="src"
+        :alt="alt"
+        :sizes="sizes ? useImageSizes(sizes) : null"
+        :densities="densities"
+        :width="width"
+        :height="height"
+        :modifiers="{
+            ratio: ratio,
+            sourceWidth: width,
+            sourceHeight: height,
+            ...modifiers,
+        }"
+        :img-attrs="computedImgAttrs"
+        :quality="quality"
+        :loading="loading"
+        :decoding="decoding"
+        @load="onLoad"
 	/>
 </template>
 
@@ -38,6 +39,10 @@ const props = defineProps({
     type: String,
   },
   sizes: {
+    type: String,
+    default: null,
+  },
+  densities: {
     type: String,
     default: null,
   },

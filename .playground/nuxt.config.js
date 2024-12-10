@@ -13,4 +13,6 @@ export default defineNuxtConfig({
       ...mappedBreakpoints,
     },
   },
+
+  compatibilityDate: "2024-12-10"
 });
