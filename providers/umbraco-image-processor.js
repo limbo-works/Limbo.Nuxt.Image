@@ -1,28 +1,28 @@
+const DEFAULT_BASE_URL = "https://example.com";
+
+function parseRatio(ratioInput) {
+  if (!ratioInput) return null;
+  if (typeof ratioInput === "number") return ratioInput;
+  if (ratioInput.includes('/')) {
+    const [a, b] = ratioInput.split('/');
+    return a / b;
+  }
+  if (ratioInput.includes(':')) {
+    const [a, b] = ratioInput.split(':');
+    return a / b;
+  }
+  return null;
+}
+
 export function getImage(
   src,
   { densities, modifiers, sizes } = {},
-  { options, $img } = {},
+  { options, $img, baseUrl = DEFAULT_BASE_URL } = {},
 ) {
-  const url = src?.startsWith?.('http') ? new URL(src) : new URL(src, "https://example.com");
+  const url = src?.startsWith?.('http') ? new URL(src) : new URL(src, baseUrl);
   const { format, fit, ratio: ratioInput, quality = url.searchParams.get('quality'), background, upscale = url.searchParams.get('upscale') ?? false } = modifiers;
-
   // Calculate ratio
-  const ratio = (() => {
-    if (ratioInput) {
-      if (typeof ratioInput === "number") {
-        return ratioInput;
-      }
-      if (ratioInput.includes('/')) {
-        const [a, b] = ratioInput.split('/');
-        return a / b;
-      }
-      if (ratioInput.includes(':')) {
-        const [a, b] = ratioInput.split(':');
-        return a / b;
-      }
-    }
-    return null;
-  })();
+  const ratio = parseRatio(ratioInput);
 
   // Set proper width and height
   let { sourceWidth, sourceHeight, width, height } = modifiers;
