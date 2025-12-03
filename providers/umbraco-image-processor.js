@@ -1,129 +1,150 @@
-const DEFAULT_BASE_URL = "https://example.com";
+const DEFAULT_BASE_URL = 'https://example.com';
 
 function parseRatio(ratioInput) {
-  if (!ratioInput) return null;
-  if (typeof ratioInput === "number") return ratioInput;
-  if (ratioInput.includes('/')) {
-    const [a, b] = ratioInput.split('/');
-    return a / b;
-  }
-  if (ratioInput.includes(':')) {
-    const [a, b] = ratioInput.split(':');
-    return a / b;
-  }
-  return null;
+	if (!ratioInput) return null;
+	if (typeof ratioInput === 'number') return ratioInput;
+	if (ratioInput.includes('/')) {
+		const [a, b] = ratioInput.split('/');
+		return a / b;
+	}
+	if (ratioInput.includes(':')) {
+		const [a, b] = ratioInput.split(':');
+		return a / b;
+	}
+	return null;
 }
 
 export function getImage(
-  src,
-  { densities, modifiers, sizes } = {},
-  { options, $img, baseUrl = DEFAULT_BASE_URL } = {},
+	src,
+	{ densities, modifiers, sizes } = {},
+	{ options, $img, baseUrl = DEFAULT_BASE_URL } = {}
 ) {
-  const url = src?.startsWith?.('http') ? new URL(src) : new URL(src, baseUrl);
-  const { format, fit, ratio: ratioInput, quality = url.searchParams.get('quality'), background, upscale = url.searchParams.get('upscale') ?? false } = modifiers;
-  // Calculate ratio
-  const ratio = parseRatio(ratioInput);
+	const url = src?.startsWith?.('http')
+		? new URL(src)
+		: new URL(src, baseUrl);
+	const {
+		format,
+		fit,
+		ratio: ratioInput,
+		quality = url.searchParams.get('quality'),
+		background,
+		upscale = url.searchParams.get('upscale') ?? false,
+	} = modifiers;
+	// Calculate ratio
+	const ratio = parseRatio(ratioInput);
 
-  // Set proper width and height
-  let { sourceWidth, sourceHeight, width, height } = modifiers;
-  if (!sourceWidth && !sourceHeight) {
-    sourceWidth = url.searchParams.get("width");
-    sourceHeight = url.searchParams.get("height");
-  }
+	// Set proper width and height
+	let { sourceWidth, sourceHeight, width, height } = modifiers;
+	if (!sourceWidth && !sourceHeight) {
+		sourceWidth = url.searchParams.get('width');
+		sourceHeight = url.searchParams.get('height');
+	}
 
-  // Clamp at source size
-  if (!upscale) {
-    if (sourceWidth && sourceHeight) {
-      if (width && +width > +sourceWidth) {
-        width = Math.min(+width, +sourceWidth);
+	// Clamp at source size
+	if (!upscale) {
+		if (sourceWidth && sourceHeight) {
+			if (width && +width > +sourceWidth) {
+				width = Math.min(+width, +sourceWidth);
 
-        if (ratio && !height) {
-          height = Math.max(width / parseFloat(ratio), +sourceHeight);
-        }
-      }
-      if (height && +height > +sourceHeight) {
-        height = Math.min(+height, +sourceHeight);
+				if (ratio && !height) {
+					height = Math.max(width / parseFloat(ratio), +sourceHeight);
+				}
+			}
+			if (height && +height > +sourceHeight) {
+				height = Math.min(+height, +sourceHeight);
 
-        if (ratio && !width) {
-          width = Math.max(height * parseFloat(ratio), +sourceWidth);
-        }
-      }
-    } else if (sourceWidth) {
-      if (width && +width > +sourceWidth) {
-        const oldWidth = +width;
-        width = Math.min(+width, +sourceWidth);
+				if (ratio && !width) {
+					width = Math.max(height * parseFloat(ratio), +sourceWidth);
+				}
+			}
+		} else if (sourceWidth) {
+			if (width && +width > +sourceWidth) {
+				const oldWidth = +width;
+				width = Math.min(+width, +sourceWidth);
 
-        if (ratio && !height) {
-          height = width / parseFloat(ratio);
-        } else if (height) {
-          height = (+height / oldWidth) * width;
-        }
-      }
-    } else if (sourceHeight) {
-      if (height && +height > +sourceHeight) {
-        const oldHeight = +height;
-        height = Math.min(+height, +sourceHeight);
+				if (ratio && !height) {
+					height = width / parseFloat(ratio);
+				} else if (height) {
+					height = (+height / oldWidth) * width;
+				}
+			}
+		} else if (sourceHeight) {
+			if (height && +height > +sourceHeight) {
+				const oldHeight = +height;
+				height = Math.min(+height, +sourceHeight);
 
-        if (ratio && !width) {
-          width = height * parseFloat(ratio);
-        } else if (width) {
-          width = (+width / oldHeight) * height;
-        }
-      }
-    }
-  }
+				if (ratio && !width) {
+					width = height * parseFloat(ratio);
+				} else if (width) {
+					width = (+width / oldHeight) * height;
+				}
+			}
+		}
+	}
 
-  if (width) {
-    width = Math.round(+width);
-  }
-  if (height) {
-    height = Math.round(+height);
-  }
+	if (width) {
+		width = Math.round(+width);
+	}
+	if (height) {
+		height = Math.round(+height);
+	}
 
-  // process modifiers
-  if (width) {
-    url.searchParams.set("width", width);
-  }
-  if (height) {
-    url.searchParams.set("height", height);
-  }
-  if (ratio) {
-    if (width && !height) {
-      url.searchParams.set("height", Math.max(1, Math.round(width / parseFloat(ratio))));
-    } else if (height && !width) {
-      url.searchParams.set("width", Math.max(1, Math.round(height * parseFloat(ratio))));
-    } else if (width && height) {
-      if (width < height * parseFloat(ratio)) {
-        url.searchParams.set("height", Math.max(1, Math.round(width / parseFloat(ratio))));
-      } else {
-        url.searchParams.set("width", Math.max(1, Math.round(height * parseFloat(ratio))));
-      }
-    }
-  }
+	// process modifiers
+	if (width) {
+		url.searchParams.set('width', width);
+	}
+	if (height) {
+		url.searchParams.set('height', height);
+	}
 
-  // Guidance: https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.ResizeMode.html
-  if (["cover", "none"].includes(fit)) {
-    url.searchParams.set("rmode", "crop");
-  } else if (!url.searchParams.get("rmode")) {
-    url.searchParams.set("rmode", "max");
-  }
+	if (ratio) {
+		const baseWidth = +(sourceWidth || width);
+		const baseHeight = +(sourceHeight || height);
+		if (width && !height) {
+			url.searchParams.set(
+				'height',
+				Math.max(1, Math.round(width / parseFloat(ratio)))
+			);
+		} else if (height && !width) {
+			url.searchParams.set(
+				'width',
+				Math.max(1, Math.round(height * parseFloat(ratio)))
+			);
+		} else if (width && height) {
+			if (baseWidth < baseHeight * parseFloat(ratio)) {
+				url.searchParams.set(
+					'height',
+					Math.max(1, Math.round(width / parseFloat(ratio)))
+				);
+			}
+		}
+	}
 
-  // https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.AutoOrientExtensions.html
-  url.searchParams.set("autoorient", "true");
+	// Guidance: https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.ResizeMode.html
+	if (['cover', 'none'].includes(fit)) {
+		url.searchParams.set('rmode', 'crop');
+	} else if (!url.searchParams.get('rmode')) {
+		url.searchParams.set('rmode', 'max');
+	}
 
-  if (background) {
-    url.searchParams.set("bgcolor", background);
-  }
+	// https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.AutoOrientExtensions.html
+	url.searchParams.set('autoorient', 'true');
 
-  if (format) {
-    url.searchParams.set("format", format);
-  }
+	if (background) {
+		url.searchParams.set('bgcolor', background);
+	}
 
-  if (quality) {
-    url.searchParams.set("quality", quality);
-  }
+	if (format) {
+		url.searchParams.set('format', format);
+	}
 
-  return {
-    url: src?.startsWith?.('http') ? url.toString() : `${url.pathname}?${url.searchParams.toString()}`,
-  };
+	if (quality) {
+		url.searchParams.set('quality', quality);
+	}
+
+	return {
+		url: src?.startsWith?.('http')
+			? url.toString()
+			: `${url.pathname}?${url.searchParams.toString()}`,
+	};
 }
