@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/v1.1.1...v1.1.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* shouldnt decrease width ([ce6afe1](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/ce6afe15db619e6f1555d5153d8630234913f8f0))
+
 ## [1.1.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/v1.1.0...v1.1.1) (2025-09-12)
 
 
