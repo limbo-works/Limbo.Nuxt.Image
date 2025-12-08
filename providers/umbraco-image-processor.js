@@ -1,19 +1,5 @@
 const DEFAULT_BASE_URL = 'https://example.com';
 
-function parseRatio(ratioInput) {
-	if (!ratioInput) return null;
-	if (typeof ratioInput === 'number') return ratioInput;
-	if (ratioInput.includes('/')) {
-		const [a, b] = ratioInput.split('/');
-		return a / b;
-	}
-	if (ratioInput.includes(':')) {
-		const [a, b] = ratioInput.split(':');
-		return a / b;
-	}
-	return null;
-}
-
 export function getImage(
 	src,
 	{ densities, modifiers, sizes } = {},
@@ -30,17 +16,19 @@ export function getImage(
 		background,
 		upscale = url.searchParams.get('upscale') ?? false,
 	} = modifiers;
-	// Calculate ratio
-	const ratio = parseRatio(ratioInput);
+	const ratio = parseRatio(ratioInput); // Calculate ratio
 
 	// Set proper width and height
 	let { sourceWidth, sourceHeight, width, height } = modifiers;
+
 	if (!sourceWidth && !sourceHeight) {
-		sourceWidth = url.searchParams.get('width');
-		sourceHeight = url.searchParams.get('height');
+		const urlWidth = url.searchParams.get('width');
+		const urlHeight = url.searchParams.get('height');
+		sourceWidth = urlWidth ? +urlWidth : width;
+		sourceHeight = urlHeight ? +urlHeight : height;
 	}
 
-	// Clamp at source size
+	// Clamp to source size if upscaling is not allowed
 	if (!upscale) {
 		if (sourceWidth && sourceHeight) {
 			if (width && +width > +sourceWidth) {
@@ -82,14 +70,17 @@ export function getImage(
 		}
 	}
 
+	// Avoid decimal values
 	if (width) {
-		width = Math.round(+width);
+		const oldWidth = width;
+		width = Math.ceil(+width);
+		height = (height / oldWidth) * width;
 	}
 	if (height) {
 		height = Math.round(+height);
 	}
 
-	// process modifiers
+	// Process modifiers
 	if (width) {
 		url.searchParams.set('width', width);
 	}
@@ -98,8 +89,6 @@ export function getImage(
 	}
 
 	if (ratio) {
-		const baseWidth = +(sourceWidth || width);
-		const baseHeight = +(sourceHeight || height);
 		if (width && !height) {
 			url.searchParams.set(
 				'height',
@@ -111,10 +100,35 @@ export function getImage(
 				Math.max(1, Math.round(height * parseFloat(ratio)))
 			);
 		} else if (width && height) {
-			if (baseWidth < baseHeight * parseFloat(ratio)) {
+			let maxWidth = width;
+			let maxHeight = height;
+
+			if (!upscale) {
+				maxWidth = Math.max(width, sourceWidth);
+				maxHeight = Math.max(height, sourceHeight);
+			}
+
+			if (width >= Math.round(height * parseFloat(ratio))) {
 				url.searchParams.set(
 					'height',
-					Math.max(1, Math.round(width / parseFloat(ratio)))
+					Math.max(
+						1,
+						Math.min(
+							Math.round(width / parseFloat(ratio)),
+							maxHeight
+						)
+					)
+				);
+			} else {
+				url.searchParams.set(
+					'width',
+					Math.max(
+						1,
+						Math.min(
+							Math.round(height * parseFloat(ratio)),
+							maxWidth
+						)
+					)
 				);
 			}
 		}
@@ -147,4 +161,18 @@ export function getImage(
 			? url.toString()
 			: `${url.pathname}?${url.searchParams.toString()}`,
 	};
+}
+
+function parseRatio(ratioInput) {
+	if (!ratioInput) return null;
+	if (typeof ratioInput === 'number') return ratioInput;
+	if (ratioInput.includes('/')) {
+		const [a, b] = ratioInput.split('/');
+		return a / b;
+	}
+	if (ratioInput.includes(':')) {
+		const [a, b] = ratioInput.split(':');
+		return a / b;
+	}
+	return null;
 }
