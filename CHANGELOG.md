@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/v1.1.2...v1.1.3) (2025-12-08)
+
+
+### Bug Fixes
+
+* refactor image processing and ratio parsing logic ([060728f](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/060728f2e4c55155a156d625049fe6be1e8e5bd2))
+
 ## [1.1.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/v1.1.1...v1.1.2) (2025-12-03)
 
 
