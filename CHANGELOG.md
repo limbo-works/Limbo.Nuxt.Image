@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.0...image-v2.0.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* 2.0.0 ([90919ec](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/90919ece2d0215bd9b7b6c793a8e645db31999f6))
+* 2.0.1 ([fca0c0e](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/fca0c0e4b6f090f792c19788e116184626bec5f1))
+* main should be nuxt.config.ts ([4dd1cc4](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/4dd1cc4f4389c8f57899187e8c3d672997217567))
+
 ## [2.0.0](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v1.1.3...image-v2.0.0) (2026-03-30)
 
 ### ⚠ BREAKING CHANGES
