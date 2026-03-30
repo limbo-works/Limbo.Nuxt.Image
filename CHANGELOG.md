@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.1...image-v2.0.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* restructured to use app folder ([87ae51f](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/87ae51f637819b1e8d63f31f304026e104ed3f88))
+
 ## [2.0.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.0...image-v2.0.1) (2026-03-30)
 
 
