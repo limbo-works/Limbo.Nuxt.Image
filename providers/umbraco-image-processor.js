@@ -1,10 +1,17 @@
+import { defineProvider } from '@nuxt/image/runtime';
+
 const DEFAULT_BASE_URL = 'https://example.com';
+
+export default defineProvider({
+	getImage,
+});
 
 export function getImage(
 	src,
 	{ densities, modifiers, sizes } = {},
 	{ options, $img, baseUrl = DEFAULT_BASE_URL } = {}
 ) {
+	modifiers = modifiers || {};
 	const url = src?.startsWith?.('http')
 		? new URL(src)
 		: new URL(src, baseUrl);

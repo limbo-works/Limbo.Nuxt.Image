@@ -12,10 +12,10 @@
     "test": "exit 0"
   },
   "dependencies": {
-    "@nuxt/image": "^1.8.1"
+    "@nuxt/image": "^2.0.0"
   },
   "devDependencies": {
-    "eslint": "^9.16.0",
-    "nuxt": "^3.14.1592"
+    "eslint": "^10.1.0",
+    "nuxt": "^4.4.2"
   }
 }

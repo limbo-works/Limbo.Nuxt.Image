@@ -1,4 +1,4 @@
-// https://v3.nuxtjs.org/api/configuration/nuxt.config
+// https://nuxt.com/docs/api/nuxt-config
 import { createResolver } from "@nuxt/kit";
 
 const { resolve } = createResolver(import.meta.url);
