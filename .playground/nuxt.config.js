@@ -1,4 +1,4 @@
-import breakpoints from "./assets/js/breakpoints";
+import breakpoints from "./app/assets/js/breakpoints";
 
 const mappedBreakpoints = {};
 for (const [key, value] of Object.entries(breakpoints)) {
