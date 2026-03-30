@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.0...image-v2.0.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* main should be nuxt.config.ts ([4dd1cc4](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/4dd1cc4f4389c8f57899187e8c3d672997217567))
+
 ## [2.0.0](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v1.1.3...image-v2.0.0) (2026-03-30)
 
 
