@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.2...image-v2.1.0) (2026-03-31)
+
+
+### Features
+
+* added @nuxt/image as optimizeDeps ([e5c2eaf](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/e5c2eafd0898c9cad37feac1edf634ed2676a940))
+
 ## [2.0.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.1...image-v2.0.2) (2026-03-30)
 
 
