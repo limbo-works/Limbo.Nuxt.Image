@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.1.0...image-v2.1.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* images loaded too large ([07570fe](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/07570fe0404e6fd43cc0206d1e614e41ed38bfc1))
+
 ## [2.1.0](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.0.2...image-v2.1.0) (2026-03-31)
 
 
