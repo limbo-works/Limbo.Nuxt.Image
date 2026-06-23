@@ -26,16 +26,26 @@ export function getImage(
 	const ratio = parseRatio(ratioInput); // Calculate ratio
 
 	// Set proper width and height
+  /*
+    We start of with make sure the base values are there if possible.
+    - sourceWidth and sourceHeight are the original image dimensions, if they are not provided we try to get them from the url search params.
+    - width and height are the requested dimensions, if they are not provided we try to get them from the url search params.
+  */
 	let { sourceWidth, sourceHeight, width, height } = modifiers;
 
+  const urlWidth = url.searchParams.get('width');
+  const urlHeight = url.searchParams.get('height');
+
 	if (!sourceWidth && !sourceHeight) {
-		const urlWidth = url.searchParams.get('width');
-		const urlHeight = url.searchParams.get('height');
 		sourceWidth = urlWidth ? +urlWidth : width;
 		sourceHeight = urlHeight ? +urlHeight : height;
 	}
+  if (!width && !height) {
+    width = urlWidth ? +urlWidth : sourceWidth;
+    height = urlHeight ? +urlHeight : sourceHeight;
+  }
 
-	// Clamp to source size if upscaling is not allowed
+	// We clamp the requested dimensions to the source size if upscaling is not allowed
 	if (!upscale) {
 		if (sourceWidth && sourceHeight) {
 			if (width && +width > +sourceWidth) {
@@ -111,8 +121,8 @@ export function getImage(
 			let maxHeight = height;
 
 			if (!upscale) {
-				maxWidth = Math.max(width, sourceWidth);
-				maxHeight = Math.max(height, sourceHeight);
+				maxWidth = Math.min(width, sourceWidth);
+				maxHeight = Math.min(height, sourceHeight);
 			}
 
 			if (width >= Math.round(height * parseFloat(ratio))) {
