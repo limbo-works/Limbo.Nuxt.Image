@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.1.1...image-v2.1.2) (2026-07-21)
+
+
+### Bug Fixes
+
+* added preload and object passing ([50a520e](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/50a520ef0baa3d7d7ccd4846048af337440ba01b))
+* updated ([4796ded](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/4796ded4a9d7dae0fba6c32cb4092c25e5c8f955))
+
 ## [2.1.1](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.1.0...image-v2.1.1) (2026-06-23)
 
 
