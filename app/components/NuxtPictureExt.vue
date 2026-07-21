@@ -20,6 +20,7 @@
 		}"
 		:img-attrs="computedImgAttrs"
 		:quality="quality"
+    :preload="preload"
 		:loading="loading"
 		:decoding="decoding"
 		@load="onLoad"
@@ -50,6 +51,10 @@ const props = defineProps({
 	height: { type: [Number, String], default: undefined },
 	ratio: { type: [Number, String], default: undefined },
 	fit: { type: String, default: '' },
+  preload: {
+    type: [Boolean, Object],
+    default: false
+  },
 	loading: {
 		type: String,
 		default: 'lazy',
