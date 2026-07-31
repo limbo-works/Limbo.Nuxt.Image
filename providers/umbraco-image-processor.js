@@ -23,7 +23,13 @@ export function getImage(
 		background,
 		upscale = url.searchParams.get('upscale') ?? false,
 	} = modifiers;
-	const ratio = parseRatio(ratioInput); // Calculate ratio
+	/*
+	  Calculate ratio. It may only drive the width and height when we actually
+	  crop, since `rmode=max` hands back the source ratio no matter what we ask
+	  for. Anywhere else the aspect-ratio css handles it instead.
+	*/
+	const crop = ['cover', 'none'].includes(fit);
+	const ratio = crop ? parseRatio(ratioInput) : null;
 
 	// Set proper width and height
   /*
@@ -45,56 +51,61 @@ export function getImage(
     height = urlHeight ? +urlHeight : sourceHeight;
   }
 
-	// We clamp the requested dimensions to the source size if upscaling is not allowed
+	// Normalise to numbers so the maths below never has to coerce strings
+	width = toPositiveNumber(width);
+	height = toPositiveNumber(height);
+	sourceWidth = toPositiveNumber(sourceWidth);
+	sourceHeight = toPositiveNumber(sourceHeight);
+
+	/*
+	  A requested ratio overrules the incoming height, also when the source
+	  dimensions are known. Nuxt Image derives the height of every srcset entry
+	  from the source dimensions, so both are practically always set by the time
+	  we get here, and the odd one out has to be recalculated for the ratio to
+	  take effect at all.
+	*/
+	if (ratio) {
+		if (width) {
+			height = width / ratio;
+		} else if (height) {
+			width = height * ratio;
+		}
+	}
+
+	/*
+	  We clamp the requested dimensions to the source size if upscaling is not
+	  allowed, scaling the other side along so the ratio survives the clamp.
+	  The clamped side is assigned outright rather than scaled, so it cannot
+	  pick up a floating point remainder that the later Math.ceil would round
+	  up into an upscale after all.
+	*/
 	if (!upscale) {
-		if (sourceWidth && sourceHeight) {
-			if (width && +width > +sourceWidth) {
-				width = Math.min(+width, +sourceWidth);
-
-				if (ratio && !height) {
-					height = Math.max(width / parseFloat(ratio), +sourceHeight);
-				}
+		if (sourceWidth && width > sourceWidth) {
+			const scale = sourceWidth / width;
+			width = sourceWidth;
+			if (height) {
+				height *= scale;
 			}
-			if (height && +height > +sourceHeight) {
-				height = Math.min(+height, +sourceHeight);
-
-				if (ratio && !width) {
-					width = Math.max(height * parseFloat(ratio), +sourceWidth);
-				}
-			}
-		} else if (sourceWidth) {
-			if (width && +width > +sourceWidth) {
-				const oldWidth = +width;
-				width = Math.min(+width, +sourceWidth);
-
-				if (ratio && !height) {
-					height = width / parseFloat(ratio);
-				} else if (height) {
-					height = (+height / oldWidth) * width;
-				}
-			}
-		} else if (sourceHeight) {
-			if (height && +height > +sourceHeight) {
-				const oldHeight = +height;
-				height = Math.min(+height, +sourceHeight);
-
-				if (ratio && !width) {
-					width = height * parseFloat(ratio);
-				} else if (width) {
-					width = (+width / oldHeight) * height;
-				}
+		}
+		if (sourceHeight && height > sourceHeight) {
+			const scale = sourceHeight / height;
+			height = sourceHeight;
+			if (width) {
+				width *= scale;
 			}
 		}
 	}
 
-	// Avoid decimal values
+	// Avoid decimal values, keeping the requested ratio intact
+	const outputRatio = ratio || (width && height ? width / height : null);
 	if (width) {
-		const oldWidth = width;
-		width = Math.ceil(+width);
-		height = (height / oldWidth) * width;
+		width = Math.ceil(width);
+		if (outputRatio) {
+			height = width / outputRatio;
+		}
 	}
 	if (height) {
-		height = Math.round(+height);
+		height = Math.max(1, Math.round(height));
 	}
 
 	// Process modifiers
@@ -105,54 +116,8 @@ export function getImage(
 		url.searchParams.set('height', height);
 	}
 
-	if (ratio) {
-		if (width && !height) {
-			url.searchParams.set(
-				'height',
-				Math.max(1, Math.round(width / parseFloat(ratio)))
-			);
-		} else if (height && !width) {
-			url.searchParams.set(
-				'width',
-				Math.max(1, Math.round(height * parseFloat(ratio)))
-			);
-		} else if (width && height) {
-			let maxWidth = width;
-			let maxHeight = height;
-
-			if (!upscale) {
-				maxWidth = Math.min(width, sourceWidth);
-				maxHeight = Math.min(height, sourceHeight);
-			}
-
-			if (width >= Math.round(height * parseFloat(ratio))) {
-				url.searchParams.set(
-					'height',
-					Math.max(
-						1,
-						Math.min(
-							Math.round(width / parseFloat(ratio)),
-							maxHeight
-						)
-					)
-				);
-			} else {
-				url.searchParams.set(
-					'width',
-					Math.max(
-						1,
-						Math.min(
-							Math.round(height * parseFloat(ratio)),
-							maxWidth
-						)
-					)
-				);
-			}
-		}
-	}
-
 	// Guidance: https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.ResizeMode.html
-	if (['cover', 'none'].includes(fit)) {
+	if (crop) {
 		url.searchParams.set('rmode', 'crop');
 	} else if (!url.searchParams.get('rmode')) {
 		url.searchParams.set('rmode', 'max');
@@ -182,14 +147,20 @@ export function getImage(
 
 function parseRatio(ratioInput) {
 	if (!ratioInput) return null;
-	if (typeof ratioInput === 'number') return ratioInput;
+	if (typeof ratioInput === 'number') return toPositiveNumber(ratioInput);
 	if (ratioInput.includes('/')) {
 		const [a, b] = ratioInput.split('/');
-		return a / b;
+		return toPositiveNumber(a / b);
 	}
 	if (ratioInput.includes(':')) {
 		const [a, b] = ratioInput.split(':');
-		return a / b;
+		return toPositiveNumber(a / b);
 	}
-	return null;
+	return toPositiveNumber(ratioInput);
+}
+
+// Only positive, finite ratios and sizes make sense to pass on
+function toPositiveNumber(value) {
+	const number = parseFloat(value);
+	return Number.isFinite(number) && number > 0 ? number : null;
 }
