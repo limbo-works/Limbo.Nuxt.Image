@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.3](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.1.2...image-v2.1.3) (2026-08-05)
+
+
+### Bug Fixes
+
+* image crop ([7be6151](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/7be6151a51d1de88a9074e4781f6f7ebb1a1312a))
+* image crop ([c35e68b](https://github.com/limbo-works/Limbo.Nuxt.Image/commit/c35e68be40f8c0fc7e2829beab28a086184c16f9))
+
 ## [2.1.2](https://github.com/limbo-works/Limbo.Nuxt.Image/compare/image-v2.1.1...image-v2.1.2) (2026-07-21)
 
 
