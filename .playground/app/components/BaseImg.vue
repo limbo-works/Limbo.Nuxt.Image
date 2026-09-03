@@ -57,7 +57,8 @@ const width = computed(() => attrs.width);
 
 const placeholderStyles = computed(() => {
 	if (props.loadColor) {
-		let { height, ratio } = attrs;
+		const { ratio } = attrs;
+		let { height } = attrs;
 		if (ratio && fit.value !== 'contain') {
 			height = Math.round(width.value / ratio);
 		}

@@ -135,7 +135,9 @@ const computedImgAttrs = computed(() => {
 
 onMounted(() => {
 	const image = nuxtPicture?.value?.$el?.querySelector?.('img');
-	image?.complete && onLoad();
+	if (image?.complete) {
+		onLoad();
+	}
 });
 
 defineExpose({

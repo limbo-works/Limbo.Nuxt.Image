@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com/
+
+      - run: yarn --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generates .nuxt, which the type templates and tsconfig references need
+      - run: yarn nuxi prepare
+
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test
