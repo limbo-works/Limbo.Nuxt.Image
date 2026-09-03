@@ -23,6 +23,7 @@ jobs:
 
       # Generates .nuxt, which the type templates and tsconfig references need
       - run: yarn nuxi prepare
+      - run: yarn nuxi prepare .playground
 
       - run: yarn lint
       - run: yarn typecheck
