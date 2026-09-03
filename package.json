@@ -9,7 +9,7 @@
     "generate": "nuxi generate .playground",
     "preview": "nuxi preview .playground",
     "lint": "eslint .",
-    "typecheck": "nuxi typecheck",
+    "typecheck": "nuxi typecheck && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

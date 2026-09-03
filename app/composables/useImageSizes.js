@@ -1,6 +1,6 @@
 /**
  * Helper to smartly fill in responsive sizes for images.
- * @param {string} sizes The sizes to fill in between.
+ * @param {string} [sizes] The sizes to fill in between.
  */
 export function useImageSizes(sizes) {
 		// Helper to get screen key from value
