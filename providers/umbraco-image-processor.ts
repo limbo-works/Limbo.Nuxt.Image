@@ -1,20 +1,29 @@
 import { defineProvider } from '@nuxt/image/runtime';
+import type { ImageModifiers, ResolvedImage } from '@nuxt/image';
 
 const DEFAULT_BASE_URL = 'https://example.com';
 
-export default defineProvider({
+export interface UmbracoImageModifiers {
+	ratio?: number | string;
+	sourceWidth?: number | string;
+	sourceHeight?: number | string;
+	upscale?: boolean;
+}
+
+type Modifiers = Partial<ImageModifiers> & UmbracoImageModifiers;
+
+export default defineProvider<{ modifiers: UmbracoImageModifiers }>({
 	getImage,
 });
 
 export function getImage(
-	src,
-	{ densities, modifiers, sizes } = {},
-	{ options, $img, baseUrl = DEFAULT_BASE_URL } = {}
-) {
-	modifiers = modifiers || {};
-	const url = src?.startsWith?.('http')
-		? new URL(src)
-		: new URL(src, baseUrl);
+	src: string,
+	options: { modifiers?: Modifiers } = {}
+): ResolvedImage {
+	const modifiers = options.modifiers || {};
+	const isAbsoluteUrl = src?.startsWith?.('http');
+	const url = isAbsoluteUrl ? new URL(src) : new URL(src, DEFAULT_BASE_URL);
+
 	const {
 		format,
 		fit,
@@ -23,39 +32,37 @@ export function getImage(
 		background,
 		upscale = url.searchParams.get('upscale') ?? false,
 	} = modifiers;
+
 	/*
 	  Calculate ratio. It may only drive the width and height when we actually
 	  crop, since `rmode=max` hands back the source ratio no matter what we ask
 	  for. Anywhere else the aspect-ratio css handles it instead.
 	*/
-	const crop = ['cover', 'none'].includes(fit);
+	const crop = fit === 'cover' || fit === 'none';
 	const ratio = crop ? parseRatio(ratioInput) : null;
 
-	// Set proper width and height
-  /*
-    We start of with make sure the base values are there if possible.
-    - sourceWidth and sourceHeight are the original image dimensions, if they are not provided we try to get them from the url search params.
-    - width and height are the requested dimensions, if they are not provided we try to get them from the url search params.
-  */
-	let { sourceWidth, sourceHeight, width, height } = modifiers;
+	let rawWidth = modifiers.width;
+	let rawHeight = modifiers.height;
+	let rawSourceWidth = modifiers.sourceWidth;
+	let rawSourceHeight = modifiers.sourceHeight;
 
-  const urlWidth = url.searchParams.get('width');
-  const urlHeight = url.searchParams.get('height');
+	const urlWidth = url.searchParams.get('width');
+	const urlHeight = url.searchParams.get('height');
 
-	if (!sourceWidth && !sourceHeight) {
-		sourceWidth = urlWidth ? +urlWidth : width;
-		sourceHeight = urlHeight ? +urlHeight : height;
+	if (!rawSourceWidth && !rawSourceHeight) {
+		rawSourceWidth = urlWidth ? +urlWidth : rawWidth;
+		rawSourceHeight = urlHeight ? +urlHeight : rawHeight;
 	}
-  if (!width && !height) {
-    width = urlWidth ? +urlWidth : sourceWidth;
-    height = urlHeight ? +urlHeight : sourceHeight;
-  }
+	if (!rawWidth && !rawHeight) {
+		rawWidth = urlWidth ? +urlWidth : rawSourceWidth;
+		rawHeight = urlHeight ? +urlHeight : rawSourceHeight;
+	}
 
 	// Normalise to numbers so the maths below never has to coerce strings
-	width = toPositiveNumber(width);
-	height = toPositiveNumber(height);
-	sourceWidth = toPositiveNumber(sourceWidth);
-	sourceHeight = toPositiveNumber(sourceHeight);
+	let width = toPositiveNumber(rawWidth);
+	let height = toPositiveNumber(rawHeight);
+	const sourceWidth = toPositiveNumber(rawSourceWidth);
+	const sourceHeight = toPositiveNumber(rawSourceHeight);
 
 	/*
 	  A requested ratio overrules the incoming height, also when the source
@@ -80,14 +87,14 @@ export function getImage(
 	  up into an upscale after all.
 	*/
 	if (!upscale) {
-		if (sourceWidth && width > sourceWidth) {
+		if (sourceWidth && width && width > sourceWidth) {
 			const scale = sourceWidth / width;
 			width = sourceWidth;
 			if (height) {
 				height *= scale;
 			}
 		}
-		if (sourceHeight && height > sourceHeight) {
+		if (sourceHeight && height && height > sourceHeight) {
 			const scale = sourceHeight / height;
 			height = sourceHeight;
 			if (width) {
@@ -108,12 +115,11 @@ export function getImage(
 		height = Math.max(1, Math.round(height));
 	}
 
-	// Process modifiers
 	if (width) {
-		url.searchParams.set('width', width);
+		url.searchParams.set('width', String(width));
 	}
 	if (height) {
-		url.searchParams.set('height', height);
+		url.searchParams.set('height', String(height));
 	}
 
 	// Guidance: https://docs.sixlabors.com/api/ImageSharp/SixLabors.ImageSharp.Processing.ResizeMode.html
@@ -135,32 +141,34 @@ export function getImage(
 	}
 
 	if (quality) {
-		url.searchParams.set('quality', quality);
+		url.searchParams.set('quality', String(quality));
 	}
 
 	return {
-		url: src?.startsWith?.('http')
+		url: isAbsoluteUrl
 			? url.toString()
 			: `${url.pathname}?${url.searchParams.toString()}`,
 	};
 }
 
-function parseRatio(ratioInput) {
+function parseRatio(ratioInput?: number | string): number | null {
 	if (!ratioInput) return null;
 	if (typeof ratioInput === 'number') return toPositiveNumber(ratioInput);
 	if (ratioInput.includes('/')) {
 		const [a, b] = ratioInput.split('/');
-		return toPositiveNumber(a / b);
+		return toPositiveNumber(Number(a) / Number(b));
 	}
 	if (ratioInput.includes(':')) {
 		const [a, b] = ratioInput.split(':');
-		return toPositiveNumber(a / b);
+		return toPositiveNumber(Number(a) / Number(b));
 	}
 	return toPositiveNumber(ratioInput);
 }
 
 // Only positive, finite ratios and sizes make sense to pass on
-function toPositiveNumber(value) {
-	const number = parseFloat(value);
+function toPositiveNumber(
+	value: number | string | null | undefined
+): number | null {
+	const number = parseFloat(String(value));
 	return Number.isFinite(number) && number > 0 ? number : null;
 }
