@@ -1,27 +1,34 @@
 <template>
 	<span
-		ref="$el"
 		class="c-base-image"
 		:class="[
 			attrs.class,
 		]"
 		:style="styles"
 	>
-		<NuxtPictureExt ref="imageComponent" v-bind="imageBindings" />
+		<NuxtPictureExt
+			ref="imageComponent"
+			v-bind="imageBindings"
+		/>
 
-		<span v-if="$slots.default" class="c-base-image__slot-content">
-			<slot></slot>
+		<span
+			v-if="$slots.default"
+			class="c-base-image__slot-content"
+		>
+			<slot />
 		</span>
 
 		<div
 			v-if="showBackground"
 			class="c-base-image__background"
 			:style="backgroundStyles"
-		></div>
+		/>
 	</span>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { StyleValue } from 'vue';
+
 defineOptions({
 	inheritAttrs: false,
 });
@@ -48,67 +55,85 @@ const props = defineProps({
 		default: false,
 	},
 });
-const attrs = useAttrs();
 
-const $el = ref(null);
+/*
+  This component forwards everything it is given rather than declaring it,
+  so the attrs it actually reads are named here to keep them out of unknown.
+*/
+interface ForwardedAttrs {
+	src?: string;
+	fit?: string;
+	width?: number | string;
+	height?: number | string;
+	ratio?: number | string;
+	style?: StyleValue;
+	'img-attrs'?: { fetchpriority?: string };
+}
 
-const fit = computed(() => attrs.fit);
-const width = computed(() => attrs.width);
+const attrs = useAttrs() as ForwardedAttrs & Record<string, unknown>;
+
+const fit = computed(() => {
+	return attrs.fit;
+});
+
+const width = computed(() => {
+	return attrs.width;
+});
+
+const forwardedAttrs = computed(() => {
+	const forwarded = { ...attrs };
+	delete forwarded.class;
+	delete forwarded.style;
+	return forwarded;
+});
 
 const placeholderStyles = computed(() => {
-	if (props.loadColor) {
-		let { height, ratio } = attrs;
-		if (ratio && fit.value !== 'contain') {
-			height = Math.round(width.value / ratio);
-		}
+	if (!props.loadColor) return null;
 
-		const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width.value}" height="${height}" viewBox="0 0 ${width.value} ${height}"><rect width="100%" height="100%" fill="${props.loadColor}" /></svg>`;
-		const backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(
-			placeholderSvg
-		)}")`;
+	const { ratio } = attrs;
+	let { height } = attrs;
+	if (ratio && fit.value !== 'contain') {
+		height = Math.round(Number(width.value) / Number(ratio));
+	}
 
-		return fit.value === 'contain'
-			? {
+	const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width.value}" height="${height}" viewBox="0 0 ${width.value} ${height}"><rect width="100%" height="100%" fill="${props.loadColor}" /></svg>`;
+	const backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(
+		placeholderSvg
+	)}")`;
+
+	return fit.value === 'contain'
+		? {
 				'--base-image-picture-background-image': backgroundImage,
 				'--base-image-picture-background-size': fit.value,
 				'--base-image-picture-background-position': '50% 50%',
 			}
-			: {
+		: {
 				'--base-image-picture-background-color': props.loadColor,
 				'--base-image-picture-background-size': '100% 100%',
 			};
-	}
-	return null;
 });
 
 const imageBindings = computed(() => {
-const classes = ['c-base-image__picture'];
-const computedAttrs = computed(() => {
-  const myAttrs = { ...attrs };
-  delete myAttrs.class;
-  delete myAttrs.style;
-  return myAttrs
-});
+	const classes = ['c-base-image__picture'];
 
-	if (computedAttrs.value['img-attrs']?.fetchpriority === 'high') {
+	if (forwardedAttrs.value['img-attrs']?.fetchpriority === 'high') {
 		classes.push('c-base-image__picture--high-priority');
 	}
-	const imageBindings = {
-		...computedAttrs.value,
+
+	return {
+		...forwardedAttrs.value,
 		class: classes.filter(Boolean),
 		style: placeholderStyles.value,
 		alt: props.alt || '',
 		quality: props.quality || 80,
 		'img-attrs': {
-			...(computedAttrs.value['img-attrs'] || {}),
+			...(forwardedAttrs.value['img-attrs'] || {}),
 		},
 	};
-
-	return imageBindings;
 });
 
 const styles = computed(() => {
-	const baseStyles = {
+	const baseStyles: Record<string, string> = {
 		'--base-image-width': '100%',
 		'--base-image-background-repeat': 'no-repeat',
 		'--base-image-background-position': 'center',
@@ -120,33 +145,34 @@ const styles = computed(() => {
 		baseStyles['--base-image-width'] = `min(${width.value}px, 100%)`;
 
 		if (ratio) {
-			baseStyles['--base-image-aspect-ratio'] = ratio;
+			baseStyles['--base-image-aspect-ratio'] = String(ratio);
 		} else if (height) {
 			baseStyles['--base-image-aspect-ratio'] =
 				`${width.value} / ${height}`;
 		}
 	}
 
-	return {
-		...baseStyles,
-		...(attrs?.style || {}),
-	};
+	return [baseStyles, attrs.style];
 });
 
 const backgroundStyles = computed(() => {
-	if (props.showBackground) {
-		const img = useImage();
-		const bgImgUrl = img(attrs.src, {
-			width: 500,
-			height: 281,
-			quality: 45,
-		});
+	if (!props.showBackground || !attrs.src) return {};
 
-		return {
-			'--base-image-picture-background-image': `url(${bgImgUrl})`,
-		};
-	}
-	return {};
+	const img = useImage();
+	/*
+	  quality is honoured by the provider at runtime, but @nuxt/image omits it
+	  from the modifier type because its components take it as a prop instead.
+	*/
+	const modifiers = {
+		width: 500,
+		height: 281,
+		quality: 45,
+	};
+	const bgImgUrl = img(attrs.src, modifiers);
+
+	return {
+		'--base-image-picture-background-image': `url(${bgImgUrl})`,
+	};
 });
 </script>
 

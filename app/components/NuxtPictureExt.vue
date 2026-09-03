@@ -8,7 +8,7 @@
 		:fit="fit"
 		:src="src"
 		:alt="alt"
-		:sizes="sizes ? useImageSizes(sizes) : null"
+		:sizes="sizes ? useImageSizes(sizes) : undefined"
 		:densities="densities"
 		:width="width"
 		:height="height"
@@ -20,80 +20,83 @@
 		}"
 		:img-attrs="computedImgAttrs"
 		:quality="quality"
-    :preload="preload"
+		:preload="preload"
 		:loading="loading"
 		:decoding="decoding"
 		@load="onLoad"
 	/>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // https://image.nuxtjs.org/components/nuxt-picture and https://image.nuxtjs.org/components/nuxt-img
+import type { ImgHTMLAttributes, StyleValue } from 'vue';
+import type { ImageModifiers } from '@nuxt/image';
+import type { UmbracoImageModifiers } from '../../providers/umbraco-image-processor';
 
-const emit = defineEmits(['load']);
-const props = defineProps({
-	alt: {
-		type: String,
-		default: '',
-	},
-	src: {
-		type: String,
-	},
-	sizes: {
-		type: String,
-		default: null,
-	},
-	densities: {
-		type: String,
-		default: null,
-	},
-	width: { type: [Number, String], default: undefined },
-	height: { type: [Number, String], default: undefined },
-	ratio: { type: [Number, String], default: undefined },
-	fit: { type: String, default: '' },
-  preload: {
-    type: [Boolean, Object],
-    default: false
-  },
-	loading: {
-		type: String,
-		default: 'lazy',
-		validator: (value) => ['lazy', 'eager', 'auto'].includes(value),
-	},
-	decoding: {
-		type: String,
-		default: 'sync',
-		validator: (value) => ['async', 'sync', 'auto'].includes(value),
-	},
+interface Props {
+	alt?: string;
+	src?: string;
+	sizes?: string;
+	densities?: string;
+	width?: number | string;
+	height?: number | string;
+	ratio?: number | string;
+	fit?: string;
+	preload?: boolean | { fetchPriority: 'auto' | 'high' | 'low' };
+	loading?: 'lazy' | 'eager' | 'auto';
+	decoding?: 'async' | 'sync' | 'auto';
+	imgAttrs?: ImgHTMLAttributes;
+	quality?: number | string;
+	modifiers?: Partial<
+		Omit<ImageModifiers, 'format' | 'quality' | 'background' | 'fit'>
+	> &
+		UmbracoImageModifiers;
+}
 
-	imgAttrs: { type: Object, default: () => ({}) },
-	quality: { type: [Number, String], default: 100 },
-	modifiers: { type: Object, default: () => ({}) },
+const props = withDefaults(defineProps<Props>(), {
+	alt: '',
+	src: undefined,
+	sizes: undefined,
+	densities: undefined,
+	width: undefined,
+	height: undefined,
+	ratio: undefined,
+	fit: '',
+	preload: false,
+	loading: 'lazy',
+	decoding: 'sync',
+	imgAttrs: () => ({}),
+	quality: 100,
+	modifiers: () => ({}),
 });
 
-const nuxtPicture = ref(null);
+const emit = defineEmits<{
+	load: [event: Event];
+}>();
+
+const nuxtPicture = useTemplateRef<{ $el?: Element }>('nuxtPicture');
+
 const isLoaded = ref(false);
 
 const urlParams = computed(() => {
-	const obj = {};
+	const params: Record<string, string> = {};
 
 	if (props.src) {
 		const url = new URL(props.src, 'https://example.com');
-		const params = new URLSearchParams(url.search);
-		params.forEach((value, key) => {
-			obj[key] = value;
+		new URLSearchParams(url.search).forEach((value, key) => {
+			params[key] = value;
 		});
 	}
 
-	return obj;
+	return params;
 });
 
 const computedStyle = computed(() => {
-	let style = null;
+	let style: Record<string, string> | null = null;
 
 	// Aspect ratio
 	if (props.ratio) {
-		style = { aspectRatio: props.ratio };
+		style = { aspectRatio: String(props.ratio) };
 	} else if (props.width && props.height) {
 		style = { aspectRatio: `${props.width} / ${props.height}` };
 	} else if (urlParams.value.width && urlParams.value.height) {
@@ -103,15 +106,16 @@ const computedStyle = computed(() => {
 	}
 
 	// Focus point
+	const rxy = urlParams.value.rxy;
 	if (
 		props.fit &&
 		['cover', 'none'].includes(props.fit) &&
-		urlParams.value.rxy?.split?.(',').length === 2
+		rxy?.split(',').length === 2
 	) {
-		const [x, y] = urlParams.value.rxy.split(',');
+		const [x, y] = rxy.split(',');
 		style = {
 			...style,
-			'--object-position': `${Math.round(x * 10000) / 100}% ${Math.round(y * 10000) / 100}%`,
+			'--object-position': `${Math.round(Number(x) * 10000) / 100}% ${Math.round(Number(y) * 10000) / 100}%`,
 		};
 	}
 
@@ -120,7 +124,9 @@ const computedStyle = computed(() => {
 
 const computedImgAttrs = computed(() => {
 	const className = ['c-nuxt-picture-ext__img', props.imgAttrs.class];
-	const style = [props.imgAttrs.style];
+	const style: (StyleValue | Record<string, string> | undefined)[] = [
+		props.imgAttrs.style,
+	];
 
 	if (props.fit && props.fit !== 'crop') {
 		style.unshift({ objectFit: props.fit });
@@ -134,8 +140,10 @@ const computedImgAttrs = computed(() => {
 });
 
 onMounted(() => {
-	const image = nuxtPicture?.value?.$el?.querySelector?.('img');
-	image?.complete && onLoad();
+	const image = nuxtPicture.value?.$el?.querySelector<HTMLImageElement>('img');
+	if (image?.complete) {
+		onLoad();
+	}
 });
 
 defineExpose({
@@ -144,10 +152,9 @@ defineExpose({
 });
 
 /* Methods */
-function onLoad(e) {
-	e = e || new Event('load');
+function onLoad(event: Event = new Event('load')) {
 	if (!isLoaded.value) {
-		emit('load', e);
+		emit('load', event);
 		isLoaded.value = true;
 	}
 }
